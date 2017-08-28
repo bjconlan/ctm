@@ -1,4 +1,9 @@
 (ns io.github.bjconlan.ctm.input-format-test
+  "Provides unit tests for functions (both private and public) defined in the
+  input-format namespace. Hopefully it does an adequate job of branch testing
+
+  This is mostly just sanity checks but also outlines desired use cases for
+  the reader"
   (:require [clojure.test :refer :all]
             [io.github.bjconlan.ctm.input-format :as input-format])
   (:import (java.text ParseException)))
@@ -6,10 +11,10 @@
 (deftest parse-duration-test
   (let [parse-duration #'input-format/parse-duration]
     ;; Desired cases
-    (testing "'lightning' string value has a value of 5"
+    (testing "'lightning' case is handled and returns a value of 5"
       [(is (= (parse-duration "lightning") 5))
        (is (= (parse-duration " lightning ") 5))])
-    (testing "'min' (minute) string values"
+    (testing "'min' (minute) string values are parsed correctly"
       [(are [x result] (= result (parse-duration x))
                        "1min" 1
                        " 60min " 60

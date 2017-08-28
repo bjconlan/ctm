@@ -79,3 +79,8 @@ Track 2:
 For those unfamiliar with leinignen I've also included the generated maven pom which adheres to the defacto maven lifecycle; as such to test simply use `mvn test` and to build `mvn build`.
 
 Once the artifacts have been built you may run the application simply by calling `java -jar conference-track-manager input.txt` where `input.txt` is the file used for processing.
+
+## Reimplementation notes
+
+I really don't like the implemented 'local search' (random selection from imperfect sessions... actually i'm sure there is a case where this is incorrect as there are cases that could require reselection from perfect sessions) solution to this problem, It doesn't perform any real optimisations and demonstrate any real cleverness. I'm sure this solution could be solved a little more elegantly (using an optimized brute force or exhaustive search method) based of the premise that the maximum number of 'talks' only being 720.
+Move to using Clojure's `core.spec` library (Clojure 1.9) for validating arguments instead of doing simple pre-condition assertions on functions

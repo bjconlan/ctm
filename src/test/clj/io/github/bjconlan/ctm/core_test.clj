@@ -12,7 +12,9 @@
 ;(deftest valid-arg
 ;  (testing "when a valid file source is the first argument the application correctly returns the expected output"))
 
-;(main (io/resource "test-input1.txt"))
+;(main (io/resource "sample.txt"))
+
+(main [(io/resource "sample.txt")])
 
 (deftest a-test
   (testing "FIXME, I fail."
