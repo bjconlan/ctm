@@ -1,70 +1,93 @@
 (ns io.github.bjconlan.ctm.schedule
-  "The schedule namespace provides functions relating to scheduling the problem
-  using a 'local search' NP hard style solver using a 'Meta heuristic' system."
+  "The schedule namespace provides functions relating to the scheduling problem
+  using a 'global optimum' NP hard style solver using a 'Meta heuristic' system."
   (:require [io.github.bjconlan.ctm.bin-packing :as bin-packing]))
 
-;; This concept should be abandoned the fitness function here is based off a
-;; hill-climbing algo which doesn't correlate to this problem'
-;(defn- fitness
-;  "This function calculates the merit of the current session based on a simple
-;  heuristic as to how close the current total is to the 'max' of the session's
-;  constraint range. The goal is to have the fitness equal to 0 (perfect) or
-;  greater than 0 (valid but sessions can still take talks)
-;
-;  Or looking at other scheduling problems you can think of less than or equal
-;  to zero as a hard constraint while greater than zero is a soft constraint"
-;  [session session-constraints]
-;  (let [talk-duration (apply + (map second session))
-;        {:keys [min max]} session-constraints]
-;    (cond
-;      (= talk-duration max) 0
-;      (< talk-duration min) (- talk-duration min)
-;      (> talk-duration max) (- max talk-duration)
-;      :else (- max talk-duration))))                                              ; within valid range but less than max
+(defn- fitness
+  "This function calculates the merit of the current session based on a simple
+  squaring of the session current duration (common in bin packing annealing).
 
-(defn- valid? [session session-constraints]
+  NOTE the original weighting is skewed to keep over and under filling
+       consistent while weighting minutes between the min and max as half
+  WARNING the half idea isn't fully formed and has some obvious problems"
+  [{:keys [talks constraints] :as session}]
+  (let [session-duration (apply + (map second talks))
+        {:keys [min max]} constraints
+        weighting (cond
+                    (and (= min max) (<= session-duration max)) session-duration
+                    (> session-duration max) (+ min (- max session-duration))
+                    :else (+ min (* (- session-duration min) 0.5)))]
+    (reduce * (repeat 2 weighting))))
+
+(defn- valid?
+  "A convenience function to check that a session fulfills the constraints
+  defined by its session-constraints"
+  [session session-constraints]
+  {:pre [(coll? session)
+         (map? session-constraints)
+         (contains? session-constraints :min)
+         (contains? session-constraints :max)]}
   (let [talk-duration (apply + (map second session))
         {:keys [min max]} session-constraints]
     (or (< talk-duration min) (> talk-duration max))))
 
-(defn- acceptable?
-  "A convenience function to test against all sessions and their constraints
-  using the above fitness function (ie. anything with 0 or above is acceptable"
-  [sessions session-constraints]
-  {:pre [(coll? sessions)
-         (coll? session-constraints)
-         (= (count sessions) (count session-constraints))]}
-  (every? #(apply valid? %) (map vector sessions session-constraints)))
+(defn- move-session-talk
+  "A convenience function for moving one talk from a session to another
 
-;(defn- can-fit?
-;  [talk session]
-;  (let [{:keys [min max capacity] :or {capacity 0}} session
-;        new-capacity (+ talk capacity)]
-;    (and (<= new-capacity max) (>= new-capacity min))))
+  NOTE the from-session & to-session arguments here are populated session
+       maps (records which contain :talks"
+  [from-session to-session talk-duration]
+  (let [talk (first (filter #(= talk-duration (second %)) (:talks from-session)))]
+    [(update-in from-session :talks (fn [talks]
+                                      (loop [[talk & next-talks] talks
+                                             prev-talks []]
+                                        (if (= talk-duration (second talk))
+                                          (concat prev-talks next-talks)
+                                          (recur next-talks (conj prev-talks talk))))))
+     (update-in to-session :talks (fn [talks] (conj talks talk)))]))
+
+(defn- next-local-optimum
+  "Performs a 'local search' to find the best move to make using the fitness function
+
+  Returns a tuple of sessions which have a single talk moved from one to the other"
+  [sessions]
+  (let [root-session (first (filter #(not (:valid %)) sessions))]
+    (->> (mapcat
+           (fn [probed-session]
+             (map #(move-session-talk probed-session root-session %)
+                  (distinct (map second (:talks probed-session)))))
+           (filter (not= root-session) sessions))
+         (apply max-key #(+ (fitness %1) (fitness %2))))))
 
 
-;; FIXME I really should have researched this problem better as the local
-;;       search concept really doesn't suit this problem domain as well as
-;;       I thought it would. I apologies in advance (this function kinda
-;;       keeps getting tempered into shape through cases.
-(defn- find-better-schedule
-  "This function needs a name change; but keeping with the idea of this being
-  some form of 'local search' implementation will be kept.
+(defn- anneal
+  "Anneal performs a 'simulated annealing' optimization to the problem.
 
-  This function actually validates if the solution is acceptable and if it
-  isn't introduces some (terrible) local search 'optimizations' (ie tries to
-  fix the results until an acceptable result is found)."
-  [sessions session-constraints]
-  (
-      ())))
+  NOTE if no solution is found the function returns nil"
+  ([sessions] (anneal sessions 4 200))
+  ([sessions temperature-min temperature-max]
+   {:pre [(vector? sessions)]}
+   (loop [sessions    sessions
+          temperature temperature-max]
+     (if (every? true (map :valid sessions))
+       sessions
+       (when (< temperature-min temperature-max)
+         (let [[from-session to-session] (next-local-optimum sessions)
+               fitness-delta (- (+ (fitness from-session) (fitness to-session))
+                                (+ (fitness (get sessions (:index from-session)))
+                                   (fitness (get sessions (:index to-session)))))]
+           (recur (if (or (pos? fitness-delta) (< (rand) (/ fitness-delta temperature)))
+                    (assoc sessions (:index from-session) from-session (:index to-session) to-session)
+                    sessions)
+                  (dec temperature))))))))
 
 (defn solve
   "The entry point for starting the 'meta heuristic' solver seeded from a
   deterministic best-fit-decreasing algorithm.
 
-  The function takes in a vector of talk-name and minute tuples as talks and
-  a vector of maps taking the 'min' and 'max' values of each as constraints
-  for the length of the session."
+  The function takes in a vector of talk-title and duration tuples as talks and
+  a vector of maps taking the 'min' and 'max' values of each as constraints for
+  the length of the session."
   [talks session-constraints]
   {:pre [(<= (apply + (map second talks)) (apply + (map :max session-constraints)))             ; all talks meet all maximum session constraints
          (>= (apply + (map second talks)) (apply + (map :min session-constraints)))             ; all talks meet all minimum session constraints
@@ -80,7 +103,11 @@
         max-session-minutes (map :max session-constraints)
         scheduled-sessions  (reduce (fn [r session-talk-idxs]
                                       (conj r (mapv #(get talks %) session-talk-idxs))) []
-                                    (bin-packing/best-fit-decreasing talk-minutes max-session-minutes))
-        (if (acceptable? scheduled-sessions session-constraints)
-          scheduled-sessions
-          (find-better-schedule scheduled-sessions session-constraints))]))
+                                    (bin-packing/best-fit-decreasing talk-minutes max-session-minutes))]
+    (->> (map vector scheduled-sessions session-constraints)
+         (map-indexed (fn [index [talks session-constraints]]
+                        {:index       index
+                         :talks       talks
+                         :constraints session-constraints
+                         :valid       (valid? talks session-constraints)}))
+         (anneal))))

@@ -9,8 +9,8 @@
 ;; this sessions vector represents the collection of sessions and their
 ;; particular constraints to the problem (in this case they need to fall
 ;; between a min/max number of minutes to be considered acceptable).
-(def ^:private sessions [{:min 180 :max 180} {:min 180 :max 240}                  ; Day 1
-                         {:min 180 :max 180} {:min 180 :max 240}])                ; Day 2
+(def ^:private session-constraints [{:min 180 :max 180} {:min 180 :max 240}       ; Day 1
+                                    {:min 180 :max 180} {:min 180 :max 240}])     ; Day 2
 
 (defn- print-usage []
   (printf "Enter a file name (or any supported java url path)\n"))
@@ -23,10 +23,10 @@
                                  (do (printf (str (.format time time-format) " " talk-title "\n"))
                                      (.plusMinutes time talk-minutes)))
                                (LocalTime/of 9 0)
-                               (concat (conj morning-session ["Lunch" 60])
-                                       (conj afternoon-session ["Networking event" 60])))
+                               (concat (conj (:talks morning-session) ["Lunch" 60])
+                                       (conj (:talks afternoon-session) ["Networking event" 60])))
                        (prn)))
-                 (partition 2 scheduled-sessions))))
+                 (partition 2 (sort-by :index scheduled-sessions)))))
 
 (defn main [args]
   (if-let [input-source (first args)]
@@ -40,7 +40,7 @@
                                   "It will be omitted. " (.getMessage e)))
                         results)))
                   [] (line-seq buffered-reader)))
-        (schedule/solve sessions)
+        (schedule/solve session-constraints)
         (print-schedule))
     (print-usage)))
 
