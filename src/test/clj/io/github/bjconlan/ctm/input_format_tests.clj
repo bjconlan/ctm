@@ -1,4 +1,4 @@
-(ns io.github.bjconlan.ctm.input-format-test
+(ns io.github.bjconlan.ctm.input-format-tests
   "Provides unit tests for functions (both private and public) defined in the
   input-format namespace. Hopefully it does an adequate job of branch testing
 
@@ -8,27 +8,20 @@
             [io.github.bjconlan.ctm.input-format :as input-format])
   (:import (java.text ParseException)))
 
-(deftest parse-duration-test
+(deftest parse-duration-tests
   (let [parse-duration #'input-format/parse-duration]
     ;; Desired cases
     (testing "'lightning' case is handled and returns a value of 5"
-      [(is (= (parse-duration "lightning") 5))
-       (is (= (parse-duration " lightning ") 5))])
+      [(is (= (parse-duration "lightning") 5))])
     (testing "'min' (minute) string values are parsed correctly"
       [(are [x result] (= result (parse-duration x))
+                       "0min" 0
                        "1min" 1
-                       " 60min " 60
+                       "60min" 60
                        (str Integer/MAX_VALUE "min") Integer/MAX_VALUE)])
     ;; Undesired cases
-    (testing "nil/incorrect type values"
-      [(are [x] (thrown-with-msg? AssertionError #"string?" (parse-duration x))
-                nil
-                10
-                {})])
-    (testing "negative numeric string values"
-      [(is (thrown-with-msg? AssertionError #"pos?" (parse-duration "0min")))])
     ;; NOTE this exemplifies some obvious edge cases which we don't entertain such as
-    ;;      capitalization (as they haven't been 'formally' outlined by the task)
+    ;;      capitalization, untrimmed strings etc.
     (testing "overflowing, underflowing/bad conversions of numeric string values to int"
       [(are [x] (thrown? NumberFormatException (parse-duration x))
                 (str Long/MAX_VALUE "min")
@@ -39,9 +32,11 @@
                 "LIGHTING"
                 "10MIN"
                 "abcd10min"
+                "-1min"
+                " 60min "
                 "")])))
 
-(deftest parse-line-test
+(deftest parse-line-tests
   ;; Desired cases
   (testing "correctly formed strings"
     [(are [x result] (= result (input-format/parse-line x))
@@ -53,9 +48,4 @@
   (testing "incorrectly formed strings (unable to resolve duration)"
     [(are [x] (thrown? ParseException (input-format/parse-line x))
               ""
-              "invalid")])
-  (testing "nil/incorrect type values"
-    [(are [x] (thrown-with-msg? AssertionError #"string?" (input-format/parse-line x))
-              nil
-              10
-              {})]))
+              "invalid")]))

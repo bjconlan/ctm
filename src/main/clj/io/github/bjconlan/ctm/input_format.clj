@@ -6,17 +6,14 @@
   (:import (java.text ParseException)))
 
 (defn- parse-duration
-  "Takes a string of that fulfills '${1 - 2147483647}min' or 'lightning' and
+  "Takes a string of that fulfills '[012147483647]+min' or 'lightning' and
   transforms it into an integer number (where lightning is converted to 5)"
-  [^String duration-str]
-  {:pre  [(string? duration-str)]
-   :post [(integer? %) (pos? %)]}
-  (let [trimmed-duration-str (string/trim duration-str)]
-    (if (= "lightning" trimmed-duration-str)
-      5
-      (-> (re-find #"^(\d+)min" trimmed-duration-str)
-          (second)
-          (Integer/parseInt)))))
+  [^String duration]
+  (if (= "lightning" duration)
+    5
+    (-> (re-find #"^(\d+)min" duration)
+        (second)
+        (Integer/parseInt))))
 
 (defn parse-line
   "Takes a string (line) from the input and attempts to transform it into
@@ -30,9 +27,7 @@
   a ParseException is thrown.
 
   NOTE when only a duration is presented this is used to represent the title"
-  [^String line-str]
-  {:pre  [(string? line-str)]
-   :post [(vector? %)]}
-  (if-let [[_ duration-str] (re-find #"(\d+min|lightning) *$" line-str)] ;Now we have two problems...
-    [line-str (parse-duration duration-str)]
-    (throw (ParseException. (str "Unable to locate duration identifier from " line-str) 0))))
+  [^String line]
+  (if-let [[_ duration-str] (re-find #"(\d+min|lightning) *$" line)]
+    [line (parse-duration duration-str)]
+    (throw (ParseException. (str "Unable to locate duration identifier from " line) 0))))
