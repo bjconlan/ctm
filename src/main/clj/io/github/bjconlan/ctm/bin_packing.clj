@@ -7,19 +7,17 @@
   "This is a very simple implementation of the 'best fit' bin packing algorithm
    using the 'offline' set with 'decreasing' (sort order optimization)
 
-   It takes a collection of item weights/values as integers and a collection of
-   bin capacities as integers, returning a collection of vectors (index
-   representative of the provided capacities input) for each bin and the
-   item weight/value indexes for the provided weights.
+   It takes a collection of item weights/values as positive integers and a
+   collection of bin capacities as positive integers, returning a collection of
+   vectors (index representative of the provided capacities input) for each bin
+   and the item weight/value indexes for the provided weights.
 
    NOTE If any items are unable to fit in the bins using the best fit algorithm
         they will be omitted from the the resulting collection of item index
         vectors"
   [weights capacities]
-  {:pre [(coll? weights)
-         (every? integer? weights)
-         (coll? capacities)
-         (every? integer? capacities)]}
+  {:pre [(every? #(<= 0 %) weights)
+         (every? #(<= 0 %) capacities)]}
   (->> (reduce (fn [bins item]
                  (if-let [bin (or (first (filter #(= (:weight item) (:capacity %)) bins)) ;best fit
                                   (first (filter #(< (:weight item) (:capacity %)) bins)))] ;first fit
