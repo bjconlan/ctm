@@ -10,7 +10,7 @@
 
 (deftest parse-duration-tests
   (let [parse-duration #'input-format/parse-duration]
-    ;; Desired cases
+    ; Desired cases
     (testing "'lightning' case is handled and returns a value of 5"
       [(is (= (parse-duration "lightning") 5))])
     (testing "'min' (minute) string values are parsed correctly"
@@ -19,9 +19,9 @@
                        "1min" 1
                        "60min" 60
                        (str Integer/MAX_VALUE "min") Integer/MAX_VALUE)])
-    ;; Undesired cases
-    ;; NOTE this exemplifies some obvious edge cases which we don't entertain such as
-    ;;      capitalization, untrimmed strings etc.
+    ; Undesired cases
+    ; NOTE this exemplifies some obvious edge cases which we don't entertain such as
+    ;      capitalization, untrimmed strings etc.
     (testing "overflowing, underflowing/bad conversions of numeric string values to int"
       [(are [x] (thrown? NumberFormatException (parse-duration x))
                 (str Long/MAX_VALUE "min")
@@ -37,14 +37,14 @@
                 "")])))
 
 (deftest parse-line-tests
-  ;; Desired cases
+  ; Desired cases
   (testing "correctly formed strings"
     [(are [x result] (= result (input-format/parse-line x))
                      "testing.10min" ["testing.10min" 10]
                      "Somthing basic lightning" ["Somthing basic lightning" 5]
                      "lightning" ["lightning" 5]
                      "10min" ["10min" 10])])
-  ;; Undesired cases
+  ; Undesired cases
   (testing "incorrectly formed strings (unable to resolve duration)"
     [(are [x] (thrown? ParseException (input-format/parse-line x))
               ""
