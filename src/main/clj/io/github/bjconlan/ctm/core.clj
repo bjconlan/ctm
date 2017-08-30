@@ -1,10 +1,13 @@
 (ns io.github.bjconlan.ctm.core
+  "The main entrypoint namespace for the scheduling system. It provides some
+  simple console/command line input & output for generating the scheduling"
   (:require [clojure.java.io :as io]
             [clojure.string :as string]
             [io.github.bjconlan.ctm.input-format :as input-format]
             [io.github.bjconlan.ctm.schedule :as schedule])
   (:import (java.time LocalTime)
-           (java.time.format DateTimeFormatter)))
+           (java.time.format DateTimeFormatter))
+  (:gen-class))
 
 ;; this sessions vector represents the collection of sessions and their
 ;; particular constraints to the problem (in this case they need to fall
@@ -31,7 +34,7 @@
         (partition 2 (sort-by :index scheduled-sessions))))
     (println "Unfortunately scheduling these talks was unsuccessful")))
 
-(defn main [args]
+(defn -main [& args]
   (if-let [input-source (first args)]
     ; Could perhaps do a better job than showing raw IO or Parse exceptions to
     ; the user here but for the most part are informative enough.
@@ -40,10 +43,10 @@
                     (try
                       (conj results (input-format/parse-line line))
                       (catch Exception e
-                        (print (str "Failed to parse \"" line \" "."
-                                    "It will be omitted. " (.getMessage e)))
+                        (println (.getMessage e))
                         results)))
                   [] (line-seq buffered-reader)))
         (schedule/solve session-constraints)
-        (print-schedule))
+        (print-schedule)
+        (doall))
     (print-usage)))

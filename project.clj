@@ -5,4 +5,6 @@
   :source-paths ["src/main/clj"]
   :test-paths ["src/test/clj"]
   :resource-paths ["src/main/resources"]
-  :dev {:resource-paths ["src/test/resources"]})
+  :dev {:resource-paths ["src/test/resources"]}
+  :main io.github.bjconlan.ctm.core
+  :aot :all)

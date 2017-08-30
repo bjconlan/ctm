@@ -1,23 +1,34 @@
 # Conference track manager
 
-The Conference track manager is an implementation of the Thoughtworks coding problem #2:
+The Conference track manager is an implementation of the Thoughtworks coding
+problem #2:
 
-I've implemented this program using Clojure as such it assumes that JDK 8 is installed along with either [Leiningen](https://leiningen.org/) or [Maven](https://maven.apache.org/) build tools are available on the `PATH` and configured appropriately. The usage section goes into further details as to how to both test and run the program.
+I've implemented this program using Clojure as such it assumes that JDK 8 is
+installed along with [Leiningen](https://leiningen.org/) and configured
+appropriately. The usage section goes into further details as to how to both
+test and run the program.
 
 ## The Problem
 
-You are planning a big programming conference and have received many proposals which have passed the initial screen process but you're having trouble fitting them into the time constraints of the day -- there are so many possibilities! So you write a program to do it for you.
+You are planning a big programming conference and have received many proposals
+which have passed the initial screen process but you're having trouble fitting
+them into the time constraints of the day -- there are so many possibilities!
+So you write a program to do it for you.
 
-- The conference has multiple tracks each of which has a morning and afternoon session.
+- The conference has multiple tracks each of which has a morning and afternoon
+  session.
 - Each session contains multiple talks.
 - Morning sessions begin at 9am and must finish by 12 noon, for lunch.
-- Afternoon sessions begin at 1pm and must finish in time for the networking event.
+- Afternoon sessions begin at 1pm and must finish in time for the networking
+  event.
 - The networking event can start no earlier than 4:00 and no later than 5:00.
 - No talk title has numbers in it.
 - All talk lengths are either in minutes (not hours) or lightning (5 minutes).
 - Presenters will be very punctual; there needs to be no gap between sessions.
  
-Note that depending on how you choose to complete this problem, your solution may give a different ordering or combination of talks into tracks. This is acceptable; you don't need to exactly duplicate the sample output given here.
+Note that depending on how you choose to complete this problem, your solution
+may give a different ordering or combination of talks into tracks. This is
+acceptable; you don't need to exactly duplicate the sample output given here.
  
 Test input:
 ```txt
@@ -76,9 +87,13 @@ Track 2:
 
 ## Usage
 
-For those unfamiliar with leinignen I've also included the generated maven pom which adheres to the defacto maven lifecycle; as such to test simply use `mvn test` and to build `mvn build`.
+To run the application tests use `lein test`
 
-Once the artifacts have been built you may run the application simply by calling `java -jar conference-track-manager input.txt` where `input.txt` is the file used for processing.
+To run the application you can either run from leiningen via `lein run
+src/test/resources/valid/sample.txt` where `src/test/resources/valid/sample.txt`
+is a file of the aforementioned format or build the application as an uberjar
+using `lein uberjar` then executing the application from the jar using `java -jar
+target/ctm-0.1.0-SNAPSHOT-standalone.jar src/test/resources/valid/sample.txt`
 
 ## Reimplementation notes
 
