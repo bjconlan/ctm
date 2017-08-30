@@ -13,37 +13,37 @@
                                     {:min 180 :max 180} {:min 180 :max 240}])     ; Day 2
 
 (defn- print-usage []
-  (printf "Enter a file name (or any supported java url path)\n"))
+  (println "Enter a file name (or any supported java url path)"))
 
 (defn- print-schedule [scheduled-sessions]
-  (let [time-format (DateTimeFormatter/ofPattern "hh:mma")]
-    (map-indexed (fn [i [morning-session afternoon-session]]
-                   (do (printf (str "Track " (inc i) ":\n"))
-                       (reduce (fn [time [talk-title talk-minutes]]
-                                 (do (printf (str (.format time time-format) " " talk-title "\n"))
-                                     (.plusMinutes time talk-minutes)))
-                               (LocalTime/of 9 0)
-                               (concat (conj (:talks morning-session) ["Lunch" 60])
-                                       (conj (:talks afternoon-session) ["Networking event" 60])))
-                       (prn)))
-                 (partition 2 (sort-by :index scheduled-sessions)))))
+  (if scheduled-sessions
+    (let [time-format (DateTimeFormatter/ofPattern "hh:mma")]
+      (map-indexed
+        (fn [i [morning-session afternoon-session]]
+          (do (println (str "Track " (inc i) ":"))
+              (reduce (fn [time [talk-title talk-minutes]]
+                        (do (println (str (.format time time-format) " " talk-title))
+                            (.plusMinutes time talk-minutes)))
+                      (LocalTime/of 9 0)
+                      (concat (conj (:talks morning-session) ["Lunch" 60])
+                              (conj (:talks afternoon-session) ["Networking event" 60])))
+              (println)))
+        (partition 2 (sort-by :index scheduled-sessions))))
+    (println "Unfortunately scheduling these talks was unsuccessful")))
 
 (defn main [args]
   (if-let [input-source (first args)]
-    ;; TODO handle reader errors
+    ; Could perhaps do a better job than showing raw IO or Parse exceptions to
+    ; the user here but for the most part are informative enough.
     (-> (with-open [buffered-reader (io/reader input-source)]
           (reduce (fn [results line]
                     (try
                       (conj results (input-format/parse-line line))
                       (catch Exception e
-                        (prn (str "Failed to parse \"" line \" "."
-                                  "It will be omitted. " (.getMessage e)))
+                        (print (str "Failed to parse \"" line \" "."
+                                    "It will be omitted. " (.getMessage e)))
                         results)))
                   [] (line-seq buffered-reader)))
         (schedule/solve session-constraints)
         (print-schedule))
     (print-usage)))
-
-(main ["sample.txt"])
-
-#_(main *command-line-args*)
