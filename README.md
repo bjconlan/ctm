@@ -95,7 +95,56 @@ is a file of the aforementioned format or build the application as an uberjar
 using `lein uberjar` then executing the application from the jar using `java -jar
 target/ctm-0.1.0-SNAPSHOT-standalone.jar src/test/resources/valid/sample.txt`
 
-## Reimplementation notes
+## Explanation of the problem solution
 
-I really don't like the implemented meta-heuristic approach taken (originally 'local search' but soon realized I would need a 'global optimum' algorithm to correct/optimize the deterministic solution. I'm sure this solution could be solved a little more elegantly using an optimized brute force or exhaustive search method based of the premise that the maximum number of 'talks' only being 840.
-Move to using Clojure's `core.spec` library (Clojure 1.9) for validating arguments instead of doing simple pre-condition assertions on functions
+I chose problem 2 as it was the one problem that didn't feel like yet another
+graph traversal problem (which we all know an love and if I was to choose again
+I would definitely stay away from the NP hard problem group as the imperfect
+nature of the task (imperfect optimization... brute force would be perfect)
+make it hard to be proud of the implemented solution. (Although I did learn a
+hell of a lot of things about these kinds of problems).
+
+The initial cut was simply to use a deterministic algorithm (First/Best fit)
+which was the simplest solution to the sample data (and is still found in the
+codebase). This took a few hours to implement and test and I thought I would
+have this challenge knocked out in a day or so. Boy was I wrong. I originally
+thought using something like a 'Hill climbing' algorithm would be a good
+candidite to solve the backfilling problem but found that it wasn't that good
+(tm). So I went back to the drawing board, researching exhaustive solutions
+like a Dynamic Programming or Branch and bound approach... but having the
+'almost solved' Best-fit decreasing algorithm implemented and working my
+stubbornness got the better of me (and I hate re-writing tests) so I went back
+to looking at Meta-heuristic solutions and realized that the Simulated
+annealing algorithm provided some nice properties over local search while kept
+within my competency level. This is what you currently see in the provided
+implementation.
+
+The design of the application is very linear (no clever designs or excessive
+use of high order functions).
+
+There is a single 'reusable' namespace `bin-packing` which holds a generic
+implementation of the 'Best fit descending' algorithm.
+
+Then there is the `core` namespace (idiomatic Clojure naming) which holds the
+main entry point for the application and some simple command line output
+functions for printing usage, the resulting packed schedule etc (io tasks).
+
+The `input-format` namespace contains a collection of functions used to parse
+the file format into the used data structure by the application.
+
+Finally the `schedule` namespace. This is really just a specialized version
+of a simulated annealing algorithm designed around the concept of a simple
+'min' 'max' constraint (used to define session boundaries). This is the core
+of the application logic & processing.
+
+## (Re)implementation notes
+
+I really don't like the implemented meta-heuristic approach taken (originally
+'local search' but soon realized I would need a 'global optimum' algorithm to
+correct/optimize the deterministic solution. I'm sure this solution could be
+solved a little more elegantly using an optimized brute force or exhaustive
+search method based of the premise that the maximum number of 'talks' only
+being 840.
+
+Move to using Clojure's `core.spec` library (Clojure 1.9) for validating
+arguments instead of doing simple pre-condition assertions on functions
